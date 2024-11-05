@@ -146,7 +146,7 @@ func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
 	cityS := string(city)
 	temperatureF, _ := strconv.ParseFloat(string(temperature), 64)
 
-	slog.Debug(fmt.Sprintf("Reader%v - Record : %v ; %v\n", cr.readerNb, cityS, temperatureF))
+	//slog.Debug(fmt.Sprintf("Reader%v - Record : %v ; %v\n", cr.readerNb, cityS, temperatureF))
 	existingEntry, exists := cr.chunkResultMap[cityS]
 	if !exists {
 		cr.chunkResultMap[cityS] = &MinMaxAverage{min: temperatureF, max: temperatureF, count: 1, average: temperatureF}

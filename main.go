@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
-	"sync"
 	"time"
 )
 
@@ -21,24 +20,16 @@ var TEST_FILE = "measurements.txt"
 // var TEST_FILE = "measurements_1M.txt"
 
 func main() {
-	var wg sync.WaitGroup
+	//var wg sync.WaitGroup
 	go func() {
 		fmt.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
-	wg.Add(1) // pprof - so we won't exit prematurely
-	wg.Add(1) // for the hardWork
 
 	//slog.SetLogLoggerLevel(slog.LevelDebug.Level())
-
-	//fmt.Printf("Going to read %v records with %v record processors\n", RECORD_PROCESSOR_NUMBER)
-	// time.Sleep(5 * time.Second)
 	startTime := time.Now()
-
 	processFile(TEST_FILE)
-
 	endTime := time.Now()
 	fmt.Printf("Execution time is %v\n", endTime.Sub(startTime))
-	wg.Wait()
 }
 
 func processFile(s string) {
