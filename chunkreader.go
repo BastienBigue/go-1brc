@@ -53,22 +53,30 @@ func (cr *ChunkReader) bytesToSkipBecausePartOfPreviousChunk() int64 {
 		}
 		defer f.Close()
 
-		dummyBytes := make([]byte, 105) //105 bytes long to be sure to have at least a full line
-		_, err2 := f.ReadAt(dummyBytes, cr.from)
+		//106 bytes long to be sure to have at least one full line (100 bytes of city name + 1 byte separator + 4 bytes temperature + 1 byte LineBreak)
+		dummyBytes := make([]byte, 106)
+
+		// cr.from-1 to catch if cr.from is at start of line
+		_, err2 := f.ReadAt(dummyBytes, cr.from-1)
 		if err2 != nil && err2 != io.EOF {
 			slog.Error(err2.Error())
-			return 0, err2
+			panic(err2)
 		}
 
+		// If true, means that cr.from is at start of line, and no need to skip any bytes
+		if dummyBytes[0] == LineBreak {
+			return 0
+		}
+
+		// Find next end of line, and return number of bytes that are part of an incomplete line at the start of the chunk
+		var res int64
 		for i, currByte := range dummyBytes {
 			if currByte == LineBreak {
 				res = int64(i) + 1
 				break
 			}
 		}
-		return res, nil
-	} else {
-		return cr.from, nil
+		return res
 	}
 }
 
