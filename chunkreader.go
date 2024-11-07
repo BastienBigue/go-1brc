@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -28,10 +27,7 @@ func NewChunkReader(fileName string, readerNb uint8, from int64, chunkSize int64
 		from:            from,
 		chunkResultMap:  make(map[string]*MinMaxAverage),
 	}
-	slog.Debug("Create reader",
-		"readerNb", cr.readerNb,
-		"chunkSize", cr.chunkSize,
-		"from", cr.from)
+	// slog.Debug("Create reader", "readerNb", cr.readerNb,	"chunkSize", cr.chunkSize, "from", cr.from)
 	return cr
 }
 
@@ -125,7 +121,6 @@ func (cr *ChunkReader) startReader() {
 			slog.Error(err.Error())
 			panic(err2)
 		}
-		slog.Debug(fmt.Sprintf("Reader%v - Buffer that will be processed : \n%v", cr.readerNb, string(bytesSlice)))
 
 		bytesBuffer = cr.removeTrailingBytes(bytesBuffer, nbBytesLeftInChunk, nbBytesInBuffer)
 		nbBytesLeftInChunk -= cr.processBuffer(bytesBuffer)
@@ -173,7 +168,7 @@ func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
 	}
 	temperatureInt32 := int32(temperatureInt64)
 
-	//slog.Debug(fmt.Sprintf("Reader%v - Record : %v ; %v\n", cr.readerNb, cityS, temperatureF))
+	//slog.Debug("processRecord", "readerNb", cr.readerNb, "city", city, "temperature", temperatureInt32)
 	existingEntry, exists := cr.chunkResultMap[cityS]
 	if !exists {
 		cr.chunkResultMap[cityS] = &MinMaxAverage{min: temperatureInt32, max: temperatureInt32, count: 1, sum: temperatureInt32}
