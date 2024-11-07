@@ -35,14 +35,21 @@ func NewChunkReader(fileName string, readerNb uint8, from int64, chunkSize int64
 	return cr
 }
 
-func (cr *ChunkReader) bytesToSkipBecauseConsumedByPreviousReader() (int64, error) {
-	slog.Debug(fmt.Sprintf("bytesToSkipBecauseConsumedByPreviousReader(%v)", cr.from))
-	var res int64
-	if cr.from != 0 {
+func (cr *ChunkReader) atStartOfFile() bool {
+	return cr.from == 0
+}
+
+func (cr *ChunkReader) bytesToSkipBecausePartOfPreviousChunk() int64 {
+	//slog.Debug("bytesToSkipBecausePartOfPreviousChunk", "reader", cr.readerNb, "from", cr.from)
+
+	if cr.atStartOfFile() {
+		return cr.from
+	} else {
 		f, err := os.Open(cr.fileName)
 		if err != nil {
 			slog.Error(err.Error())
-			return 0, err
+			panic(err)
+
 		}
 		defer f.Close()
 
