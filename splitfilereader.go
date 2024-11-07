@@ -9,42 +9,54 @@ import (
 type SplitFileReaders struct {
 	fileName  string
 	nbReaders int
+	fileSize  int64
+}
+
+func NewSplitFileReader(fileName string, nbReaders int) SplitFileReaders {
+	return SplitFileReaders{
+		fileName:  fileName,
+		nbReaders: nbReaders,
+		fileSize:  fileSize(fileName)}
 }
 
 func (sfr *SplitFileReaders) processFileConcurrently() (chan map[string]*MinMaxAverage, error) {
-	splitSize, err := sfr.splitSize()
-	if err != nil {
-		slog.Error(err.Error())
-		return nil, err
-	}
 	mapsChan := make(chan map[string]*MinMaxAverage)
 	slog.Info(fmt.Sprintf("Start %v readers for file %v", sfr.nbReaders, sfr.fileName))
-	sfr.startReaders(splitSize, mapsChan)
+	sfr.startReaders(mapsChan)
 	return mapsChan, nil
 }
 
-func (sfr *SplitFileReaders) splitSize() (int64, error) {
-	f, err := os.Open(sfr.fileName)
+func fileSize(fileName string) int64 {
+	f, err := os.Open(fileName)
 	if err != nil {
 		slog.Error(err.Error())
-		return 0, err
+		panic(err)
 	}
 	defer f.Close()
 
 	stat, err := f.Stat()
 	if err != nil {
 		slog.Error(err.Error())
-		return 0, err
+		panic(err)
 	}
-	fileSize := stat.Size()
-	splitSize := fileSize/int64(sfr.nbReaders) + 1
-	return splitSize, nil
+	return stat.Size()
 }
 
-func (sfr *SplitFileReaders) startReaders(chunkSize int64, chunkResultChan chan map[string]*MinMaxAverage) {
+func (sfr *SplitFileReaders) defaultChunkSize() int64 {
+	return sfr.fileSize/int64(sfr.nbReaders) + 1
+}
+
+func (sfr *SplitFileReaders) chunkSizeForReader(readerNb int) int64 {
+	if readerNb == sfr.nbReaders-1 {
+		return sfr.fileSize - (int64(sfr.nbReaders)-1)*sfr.defaultChunkSize()
+	} else {
+		return sfr.defaultChunkSize()
+	}
+}
+
+func (sfr *SplitFileReaders) startReaders(chunkResultChan chan map[string]*MinMaxAverage) {
 	for i := 0; i < sfr.nbReaders; i++ {
-		slog.Debug("Start reader", "from", int64(i)*chunkSize, "chunkLength", chunkSize)
-		r := NewChunkReader(sfr.fileName, int64(i), chunkSize, chunkResultChan)
+		r := NewChunkReader(sfr.fileName, uint8(i), int64(i)*sfr.defaultChunkSize(), sfr.chunkSizeForReader(i), chunkResultChan)
 		go r.startReader()
 	}
 }
