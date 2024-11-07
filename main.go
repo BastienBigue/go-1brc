@@ -10,15 +10,12 @@ import (
 var NUMBER_OF_READERS = 8
 var READ_BUFFER_SIZE = 8 * 1024 * 1024
 
-// var TEST_FILE = IntputFile{"temperatures.csv", 10}
+var TEST_FILE = IntputFile{"measurements_10.txt", 10}
 
-// var TEST_FILE = IntputFile{"draft.txt", 10}
-// var TEST_FILE = IntputFile{"measurements_100.txt", 100}
-// var TEST_FILE = IntputFile{"measurements_10k.txt", 10 * 1000}
-// var TEST_FILE = IntputFile{"measurements_1M.txt", 1000 * 1000}
+// var TEST_FILE = IntputFile{"measurements_1k.txt", 1000}
+// var TEST_FILE = IntputFile{"measurements_100k.txt", 100 * 1000}
 // var TEST_FILE = IntputFile{"measurements_10M.txt", 10 * 1000 * 1000}
-// var TEST_FILE = InputFile{"measurements_100M.txt", 100* 1000 * 1000}
-var TEST_FILE = IntputFile{"measurements.txt", 1000 * 1000 * 1000}
+// var TEST_FILE = IntputFile{"measurements_1B.txt", 1000 * 1000 * 1000}
 
 type IntputFile struct {
 	fileName string
