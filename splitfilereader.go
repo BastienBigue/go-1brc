@@ -27,14 +27,7 @@ func (sfr *SplitFileReaders) processFileConcurrently() (chan map[string]*MinMaxA
 }
 
 func fileSize(fileName string) int64 {
-	f, err := os.Open(fileName)
-	if err != nil {
-		slog.Error(err.Error())
-		panic(err)
-	}
-	defer f.Close()
-
-	stat, err := f.Stat()
+	stat, err := os.Stat(fileName)
 	if err != nil {
 		slog.Error(err.Error())
 		panic(err)
