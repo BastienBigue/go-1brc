@@ -144,13 +144,18 @@ func (cr *ChunkReader) processBuffer(byteBuffer ByteBuffer, bytesToConsume int64
 
 func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
 	cityS := string(city)
-	temperatureF, _ := strconv.ParseFloat(string(temperature), 64)
+	temperatureInt64, err := strconv.ParseInt(string(temperature), 10, 32)
+	if err != nil {
+		slog.Error(err.Error())
+		panic(err)
+	}
+	temperatureInt32 := int32(temperatureInt64)
 
 	//slog.Debug(fmt.Sprintf("Reader%v - Record : %v ; %v\n", cr.readerNb, cityS, temperatureF))
 	existingEntry, exists := cr.chunkResultMap[cityS]
 	if !exists {
-		cr.chunkResultMap[cityS] = &MinMaxAverage{min: temperatureF, max: temperatureF, count: 1, average: temperatureF}
+		cr.chunkResultMap[cityS] = &MinMaxAverage{min: temperatureInt32, max: temperatureInt32, count: 1, sum: temperatureInt32}
 	} else {
-		existingEntry.updateWith(temperatureF)
+		existingEntry.updateWith(temperatureInt32)
 	}
 }
