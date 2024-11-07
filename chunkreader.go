@@ -80,17 +80,33 @@ func (cr *ChunkReader) bytesToSkipBecausePartOfPreviousChunk() int64 {
 	}
 }
 
-func (cr *ChunkReader) startReader() error {
-	slog.Info(fmt.Sprintf("Reader%v - Start startReader with chunkLength=%v", cr.readerNb, cr.chunkSize))
-	bytesToSkipBecauseConsumedByPreviousReader, err := cr.bytesToSkipBecauseConsumedByPreviousReader()
-	slog.Debug(fmt.Sprintf("Reader%v - Reader will skip %v bytes at the beginning of its chunk", cr.readerNb, bytesToSkipBecauseConsumedByPreviousReader))
-	if err != nil {
-		return err
+// Remove, if necessary, trailing bytes that are not part of this chunk, while keeping the last line complete
+func (cr *ChunkReader) removeTrailingBytes(bytesBuffer []byte, nbBytesLeftInChunk int64, nbBytesInBuffer int) []byte {
+	if nbBytesLeftInChunk < int64(nbBytesInBuffer) {
+		//slog.Debug("startReader - remove trailing", "reader", cr.readerNb, "nbBytesLeftInChunk", nbBytesLeftInChunk, "nbBytesInBuffer", nbBytesInBuffer)
+		for i, byte := range bytesBuffer[nbBytesLeftInChunk-1:] {
+			if byte == LineBreak {
+				bytesBuffer = bytesBuffer[:nbBytesLeftInChunk+int64(i)]
+				break
+			}
+		}
+		return bytesBuffer
 	}
-	nbBytesToRead := cr.chunkSize - bytesToSkipBecauseConsumedByPreviousReader
-	for nbBytesToRead > 0 {
+	return bytesBuffer
+}
 
-		slog.Debug(fmt.Sprintf("Reader%v - Still %v bytes to read", cr.readerNb, nbBytesToRead))
+func (cr *ChunkReader) startReader() {
+	slog.Info("startReader - start!", "reader", cr.readerNb)
+
+	bytesToSkipBecauseConsumedByPreviousReader := cr.bytesToSkipBecausePartOfPreviousChunk()
+	//slog.Debug("Skip bytes at start of chunk", "reader", cr.readerNb, "bytesSkipped", bytesToSkipBecauseConsumedByPreviousReader)
+
+	// Reduces number of bytes to read by the number of bytes present at the beginning of the chunk and that were processed by the previous reader.
+	nbBytesLeftInChunk := cr.chunkSize - bytesToSkipBecauseConsumedByPreviousReader
+
+	for nbBytesLeftInChunk > 0 {
+
+		// slog.Debug("startReader - loop", "reader", cr.readerNb, "bytes to read", nbBytesLeftInChunk)
 
 		f, err := os.Open(cr.fileName)
 		if err != nil {
