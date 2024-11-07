@@ -111,40 +111,28 @@ func (cr *ChunkReader) startReader() {
 		f, err := os.Open(cr.fileName)
 		if err != nil {
 			slog.Error(err.Error())
-			return err
+			panic(err)
 		}
 		defer f.Close()
 
-		bytesSlice := make([]byte, READ_BUFFER_SIZE)
-		readAtOffset := cr.from + cr.chunkSize - nbBytesToRead
-		slog.Debug(fmt.Sprintf("Reader%v - Read from offset %v", cr.readerNb, readAtOffset))
+		bytesBuffer := make([]byte, READ_BUFFER_SIZE)
 
-		var byteBuffer ByteBuffer
-		nbBytesRead, err2 := f.ReadAt(bytesSlice, readAtOffset)
+		// Offset where we should read is chunk end - bytes read
+		readAtOffset := cr.from + cr.chunkSize - nbBytesLeftInChunk
+		// slog.Debug("startReader - read", "reader", cr.readerNb, "Read offset", readAtOffset)
+		nbBytesInBuffer, err2 := f.ReadAt(bytesBuffer, readAtOffset)
 		if err2 != nil && err2 != io.EOF {
 			slog.Error(err.Error())
-			return err
-		} else if err2 == io.EOF {
-			byteBuffer = ByteBuffer{byteBuffer: bytesSlice[:nbBytesRead], containsEOF: true}
-
-			nbBytesToRead = int64(nbBytesRead)
-			slog.Debug(fmt.Sprintf("Reader%v - Current buffer contains EOF. Its size is %v", cr.readerNb, nbBytesRead))
-		} else {
-			byteBuffer = ByteBuffer{byteBuffer: bytesSlice[:nbBytesRead], containsEOF: false}
+			panic(err2)
 		}
 		slog.Debug(fmt.Sprintf("Reader%v - Buffer that will be processed : \n%v", cr.readerNb, string(bytesSlice)))
 
-		nbBytesToRead = cr.processBuffer(byteBuffer, nbBytesToRead)
+		bytesBuffer = cr.removeTrailingBytes(bytesBuffer, nbBytesLeftInChunk, nbBytesInBuffer)
+		nbBytesLeftInChunk -= cr.processBuffer(bytesBuffer)
 
 	}
 	cr.chunkResultChan <- cr.chunkResultMap
-	slog.Info(fmt.Sprintf("Reader%v - Reader%v is done!", cr.readerNb, cr.readerNb))
-	return nil
-}
-
-type ByteBuffer struct {
-	byteBuffer  []byte
-	containsEOF bool
+	slog.Info("startReader - done!", "reader", cr.readerNb)
 }
 
 func (cr *ChunkReader) processBuffer(byteBuffer ByteBuffer, bytesToConsume int64) int64 {
