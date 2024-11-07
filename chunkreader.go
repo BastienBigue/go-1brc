@@ -135,29 +135,33 @@ func (cr *ChunkReader) startReader() {
 	slog.Info("startReader - done!", "reader", cr.readerNb)
 }
 
-func (cr *ChunkReader) processBuffer(byteBuffer ByteBuffer, bytesToConsume int64) int64 {
+func (cr *ChunkReader) processBuffer(byteBuffer []byte) int64 {
+	//slog.Debug("processBuffer", "readerNb", cr.readerNb, "nbBytesLeftInChunk", nbBytesLeftInChunk, "len(byteBuffer)", len(byteBuffer), "byteBuffer", string(byteBuffer))
 	startLineOffset := 0
 	temperatureOffset := 0
 	var currentCity, temperature []byte
-	for i, byteRead := range byteBuffer.byteBuffer {
-		//slog.Debug(fmt.Sprintf("%v;%v\n", i, string(byteRead)))
+	var byteProcessedInBuffer int64
+	for currentOffset, byteRead := range byteBuffer {
 		if byteRead == SemiColon {
-			currentCity = byteBuffer.byteBuffer[startLineOffset:i]
-			temperatureOffset = i + 1
+			currentCity = byteBuffer[startLineOffset:currentOffset]
+			temperatureOffset = currentOffset + 1
 		}
-		if byteRead == LineBreak || (byteBuffer.containsEOF && i == len(byteBuffer.byteBuffer)-1) {
-			//slog.Debug(fmt.Sprintf("i=%v;len(bytes)=%v\n", i, len(byteBuffer.byteBuffer)))
-			//slog.Debug(fmt.Sprintf("Reader%v - Process line between offsets %v and %v\n", cr.readerNb, startLineOffset, i))
-			temperature = byteBuffer.byteBuffer[temperatureOffset:i]
+		if byteRead == LineBreak {
+			//slog.Debug("processBuffer - Line break found", "reader", cr.readerNb, "startLineOffset", startLineOffset, "endLineOffset", currentOffset, "line", byteBuffer[startLineOffset:currentOffset])
+
+			// Removes "." from decimal
+			temperature = append(byteBuffer[temperatureOffset:currentOffset-2], byteBuffer[currentOffset-1])
+
 			cr.processRecord(currentCity, temperature)
-			bytesToConsume -= int64(i - startLineOffset + 1) //+1 for line break we jump over
-			if bytesToConsume < 0 {
-				break
-			}
-			startLineOffset = i + 1
+
+			// Number of bytes processed is end-start+1
+			byteProcessedInBuffer += int64(currentOffset - startLineOffset + 1)
+
+			// Update startLineOffset for next line
+			startLineOffset = currentOffset + 1
 		}
 	}
-	return bytesToConsume
+	return byteProcessedInBuffer
 }
 
 func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
