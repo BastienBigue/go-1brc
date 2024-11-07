@@ -13,20 +13,19 @@ const LineBreak byte = byte('\n')
 
 type ChunkReader struct {
 	fileName        string
-	readerNb        int64
-	chunkSize       int64
+	readerNb        uint8
+	from, chunkSize int64
 	chunkResultChan chan map[string]*MinMaxAverage
-	from            int64
 	chunkResultMap  map[string]*MinMaxAverage
 }
 
-func NewChunkReader(fileName string, readerNb int64, chunkSize int64, chunkResultChan chan map[string]*MinMaxAverage) ChunkReader {
+func NewChunkReader(fileName string, readerNb uint8, from int64, chunkSize int64, chunkResultChan chan map[string]*MinMaxAverage) ChunkReader {
 	cr := ChunkReader{
 		fileName:        fileName,
 		readerNb:        readerNb,
 		chunkSize:       chunkSize,
 		chunkResultChan: chunkResultChan,
-		from:            readerNb * chunkSize,
+		from:            from,
 		chunkResultMap:  make(map[string]*MinMaxAverage),
 	}
 	slog.Debug("Create reader",
