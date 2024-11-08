@@ -19,8 +19,8 @@ func NewSplitFileReader(fileName string, nbReaders int) SplitFileReaders {
 		fileSize:  fileSize(fileName)}
 }
 
-func (sfr *SplitFileReaders) processFileConcurrently() (chan map[string]*MinMaxAverage, error) {
-	mapsChan := make(chan map[string]*MinMaxAverage)
+func (sfr *SplitFileReaders) processFileConcurrently() (chan map[uint32]*CityTemperatures, error) {
+	mapsChan := make(chan map[uint32]*CityTemperatures)
 	slog.Info(fmt.Sprintf("Start %v readers for file %v", sfr.nbReaders, sfr.fileName))
 	sfr.startReaders(mapsChan)
 	return mapsChan, nil
@@ -47,7 +47,7 @@ func (sfr *SplitFileReaders) chunkSizeForReader(readerNb int) int64 {
 	}
 }
 
-func (sfr *SplitFileReaders) startReaders(chunkResultChan chan map[string]*MinMaxAverage) {
+func (sfr *SplitFileReaders) startReaders(chunkResultChan chan map[uint32]*CityTemperatures) {
 	for i := 0; i < sfr.nbReaders; i++ {
 		r := NewChunkReader(sfr.fileName, uint8(i), int64(i)*sfr.defaultChunkSize(), sfr.chunkSizeForReader(i), chunkResultChan)
 		go r.startReader()

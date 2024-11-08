@@ -1,6 +1,7 @@
 package main
 
 import (
+	"hash/fnv"
 	"io"
 	"log/slog"
 	"os"
@@ -14,18 +15,18 @@ type ChunkReader struct {
 	fileName        string
 	readerNb        uint8
 	from, chunkSize int64
-	chunkResultChan chan map[string]*MinMaxAverage
-	chunkResultMap  map[string]*MinMaxAverage
+	chunkResultChan chan map[uint32]*CityTemperatures
+	chunkResultMap  map[uint32]*CityTemperatures
 }
 
-func NewChunkReader(fileName string, readerNb uint8, from int64, chunkSize int64, chunkResultChan chan map[string]*MinMaxAverage) ChunkReader {
+func NewChunkReader(fileName string, readerNb uint8, from int64, chunkSize int64, chunkResultChan chan map[uint32]*CityTemperatures) ChunkReader {
 	cr := ChunkReader{
 		fileName:        fileName,
 		readerNb:        readerNb,
 		chunkSize:       chunkSize,
 		chunkResultChan: chunkResultChan,
 		from:            from,
-		chunkResultMap:  make(map[string]*MinMaxAverage),
+		chunkResultMap:  make(map[uint32]*CityTemperatures),
 	}
 	// slog.Debug("Create reader", "readerNb", cr.readerNb,	"chunkSize", cr.chunkSize, "from", cr.from)
 	return cr
@@ -160,13 +161,17 @@ func (cr *ChunkReader) processBuffer(byteBuffer []byte) int64 {
 }
 
 func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
-	cityS := string(city)
+
+	hash := fnv.New32()
+	hash.Write(city)
+	cityHash := hash.Sum32()
+
 	temperatureInt32 := parseTemperatureAsInt(temperature)
 
 	//slog.Debug("processRecord", "readerNb", cr.readerNb, "city", city, "temperature", temperatureInt32)
-	existingEntry, exists := cr.chunkResultMap[cityS]
+	existingEntry, exists := cr.chunkResultMap[cityHash]
 	if !exists {
-		cr.chunkResultMap[cityS] = &MinMaxAverage{min: temperatureInt32, max: temperatureInt32, count: 1, sum: temperatureInt32}
+		cr.chunkResultMap[cityHash] = &CityTemperatures{city: city, min: temperatureInt32, max: temperatureInt32, count: 1, sum: temperatureInt32}
 	} else {
 		existingEntry.updateWith(temperatureInt32)
 	}

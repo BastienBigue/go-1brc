@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	_ "net/http/pprof"
-	"os"
-	"runtime/pprof"
 	"time"
 )
 
@@ -25,16 +23,16 @@ type IntputFile struct {
 
 func main() {
 
-	f, err := os.Create("profiles/cpu_profile_manual_parse_int.prof")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
+	// f, err := os.Create("profiles/")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer f.Close()
 
-	if err := pprof.StartCPUProfile(f); err != nil {
-		panic(err)
-	}
-	defer pprof.StopCPUProfile()
+	// if err := pprof.StartCPUProfile(f); err != nil {
+	// 	panic(err)
+	// }
+	// defer pprof.StopCPUProfile()
 
 	// slog.SetLogLoggerLevel(slog.LevelDebug.Level())
 
@@ -45,7 +43,7 @@ func main() {
 	checkResult(TEST_FILE, resultMap)
 }
 
-func processFile(inputFile IntputFile) map[string]*MinMaxAverage {
+func processFile(inputFile IntputFile) map[uint32]*CityTemperatures {
 
 	splitFileReader := NewSplitFileReader(inputFile.fileName, NUMBER_OF_READERS)
 	reducer := NewReducer()
@@ -60,7 +58,7 @@ func processFile(inputFile IntputFile) map[string]*MinMaxAverage {
 	return reducer.resultMap
 }
 
-func checkResult(inputFile IntputFile, resultMap map[string]*MinMaxAverage) {
+func checkResult(inputFile IntputFile, resultMap map[uint32]*CityTemperatures) {
 	var nbLinesProcessed int64
 	for _, v := range resultMap {
 		nbLinesProcessed += int64(v.count)

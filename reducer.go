@@ -3,14 +3,14 @@ package main
 import "log/slog"
 
 type Reducer struct {
-	resultMap map[string]*MinMaxAverage
+	resultMap map[uint32]*CityTemperatures
 }
 
 func NewReducer() Reducer {
-	return Reducer{resultMap: make(map[string]*MinMaxAverage)}
+	return Reducer{resultMap: make(map[uint32]*CityTemperatures)}
 }
 
-func (r *Reducer) reduce(partialResultMap map[string]*MinMaxAverage) {
+func (r *Reducer) reduce(partialResultMap map[uint32]*CityTemperatures) {
 	slog.Info("Reduce")
 	for k1, v1 := range partialResultMap {
 		v2, ok := r.resultMap[k1]
