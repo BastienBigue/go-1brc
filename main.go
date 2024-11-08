@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	_ "net/http/pprof"
+	"runtime"
 	"slices"
 	"time"
 )
 
-var NUMBER_OF_READERS = 8
+var NUMBER_OF_READERS = runtime.NumCPU()
 var READ_BUFFER_SIZE = 8 * 1024 * 1024
 
 // var TEST_FILE = IntputFile{"test_data/measurements_10.txt", 10}
