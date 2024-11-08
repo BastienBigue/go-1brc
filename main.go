@@ -25,7 +25,7 @@ type IntputFile struct {
 
 func main() {
 
-	f, err := os.Create("cpu_profile.prof")
+	f, err := os.Create("profiles/cpu_profile_manual_parse_int.prof")
 	if err != nil {
 		panic(err)
 	}

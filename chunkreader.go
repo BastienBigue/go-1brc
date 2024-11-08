@@ -4,11 +4,11 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"strconv"
 )
 
 const SemiColon byte = byte(';')
 const LineBreak byte = byte('\n')
+const Minus byte = byte('-')
 
 type ChunkReader struct {
 	fileName        string
@@ -161,12 +161,7 @@ func (cr *ChunkReader) processBuffer(byteBuffer []byte) int64 {
 
 func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
 	cityS := string(city)
-	temperatureInt64, err := strconv.ParseInt(string(temperature), 10, 32)
-	if err != nil {
-		slog.Error(err.Error())
-		panic(err)
-	}
-	temperatureInt32 := int32(temperatureInt64)
+	temperatureInt32 := parseTemperatureAsInt(temperature)
 
 	//slog.Debug("processRecord", "readerNb", cr.readerNb, "city", city, "temperature", temperatureInt32)
 	existingEntry, exists := cr.chunkResultMap[cityS]
@@ -174,5 +169,27 @@ func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
 		cr.chunkResultMap[cityS] = &MinMaxAverage{min: temperatureInt32, max: temperatureInt32, count: 1, sum: temperatureInt32}
 	} else {
 		existingEntry.updateWith(temperatureInt32)
+	}
+}
+
+func parseTemperatureAsInt(temperatureBytes []byte) int32 {
+	if len(temperatureBytes) == 4 { // temp < -10
+		return -parseAbsTemperatureAsInt(temperatureBytes[1:])
+	} else if len(temperatureBytes) == 3 && temperatureBytes[0] == Minus { // -10 < temp < 0
+		return -parseAbsTemperatureAsInt(temperatureBytes[1:])
+	} else if len(temperatureBytes) == 3 && temperatureBytes[0] != Minus { // temp > 10
+		return parseAbsTemperatureAsInt(temperatureBytes)
+	} else { // 0 <= temp < 10
+		return parseAbsTemperatureAsInt(temperatureBytes)
+	}
+}
+
+func parseAbsTemperatureAsInt(temperatureBytes []byte) int32 {
+	if len(temperatureBytes) == 3 {
+		return (int32(temperatureBytes[0])-48)*100 + (int32(temperatureBytes[1])-48)*10 + (int32(temperatureBytes[2]) - 48)
+	} else if len(temperatureBytes) == 2 {
+		return (int32(temperatureBytes[0])-48)*10 + (int32(temperatureBytes[1]) - 48)
+	} else {
+		panic("Temperature with less than 2 or more than 3 digits")
 	}
 }
