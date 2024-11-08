@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	_ "net/http/pprof"
+	"os"
+	"runtime/pprof"
 	"time"
 )
 
@@ -24,9 +25,16 @@ type IntputFile struct {
 
 func main() {
 
-	go func() {
-		fmt.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	f, err := os.Create("cpu_profile.prof")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	if err := pprof.StartCPUProfile(f); err != nil {
+		panic(err)
+	}
+	defer pprof.StopCPUProfile()
 
 	// slog.SetLogLoggerLevel(slog.LevelDebug.Level())
 

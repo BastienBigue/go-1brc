@@ -92,7 +92,7 @@ func (cr *ChunkReader) removeTrailingBytes(bytesBuffer []byte, nbBytesLeftInChun
 }
 
 func (cr *ChunkReader) startReader() {
-	slog.Info("startReader - start!", "reader", cr.readerNb)
+	slog.Info("startReader - start", "reader", cr.readerNb)
 
 	bytesToSkipBecauseConsumedByPreviousReader := cr.bytesToSkipBecausePartOfPreviousChunk()
 	//slog.Debug("Skip bytes at start of chunk", "reader", cr.readerNb, "bytesSkipped", bytesToSkipBecauseConsumedByPreviousReader)
@@ -127,7 +127,7 @@ func (cr *ChunkReader) startReader() {
 
 	}
 	cr.chunkResultChan <- cr.chunkResultMap
-	slog.Info("startReader - done!", "reader", cr.readerNb)
+	slog.Info("startReader - done", "reader", cr.readerNb)
 }
 
 func (cr *ChunkReader) processBuffer(byteBuffer []byte) int64 {
