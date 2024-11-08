@@ -171,7 +171,7 @@ func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
 	//slog.Debug("processRecord", "readerNb", cr.readerNb, "city", city, "temperature", temperatureInt32)
 	existingEntry, exists := cr.chunkResultMap[cityHash]
 	if !exists {
-		cr.chunkResultMap[cityHash] = &CityTemperatures{city: city, min: temperatureInt32, max: temperatureInt32, count: 1, sum: temperatureInt32}
+		cr.chunkResultMap[cityHash] = NewCityTemperatures(city, temperatureInt32)
 	} else {
 		existingEntry.updateWith(temperatureInt32)
 	}

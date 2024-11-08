@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	_ "net/http/pprof"
+	"slices"
 	"time"
 )
 
@@ -11,10 +12,13 @@ var READ_BUFFER_SIZE = 8 * 1024 * 1024
 
 // var TEST_FILE = IntputFile{"test_data/measurements_10.txt", 10}
 
-// var TEST_FILE = IntputFile{"test_data/measurements_1k.txt", 1000}
+var TEST_FILE = IntputFile{"test_data/measurements_1k.txt", 1000}
+
 // var TEST_FILE = IntputFile{"test_data/measurements_100k.txt", 100 * 1000}
+
 // var TEST_FILE = IntputFile{"test_data/measurements_10M.txt", 10 * 1000 * 1000}
-var TEST_FILE = IntputFile{"test_data/measurements_1B.txt", 1000 * 1000 * 1000}
+
+// var TEST_FILE = IntputFile{"test_data/measurements_1B.txt", 1000 * 1000 * 1000}
 
 type IntputFile struct {
 	fileName string
@@ -43,7 +47,7 @@ func main() {
 	checkResult(TEST_FILE, resultMap)
 }
 
-func processFile(inputFile IntputFile) map[uint32]*CityTemperatures {
+func processFile(inputFile IntputFile) []CityTemperatures {
 
 	splitFileReader := NewSplitFileReader(inputFile.fileName, NUMBER_OF_READERS)
 	reducer := NewReducer()
@@ -54,13 +58,23 @@ func processFile(inputFile IntputFile) map[uint32]*CityTemperatures {
 		reducer.reduce(partialResultMap)
 	}
 
-	fmt.Println(reducer.resultMap)
-	return reducer.resultMap
+	sortedCityTemperatures := sorted(reducer.resultMap)
+	fmt.Println(sortedCityTemperatures)
+	return sortedCityTemperatures
 }
 
-func checkResult(inputFile IntputFile, resultMap map[uint32]*CityTemperatures) {
+func sorted(resultMap map[uint32]*CityTemperatures) []CityTemperatures {
+	var resultSlice []CityTemperatures
+	for _, ct := range resultMap {
+		resultSlice = append(resultSlice, *ct)
+	}
+	slices.SortFunc(resultSlice, sortByName)
+	return resultSlice
+}
+
+func checkResult(inputFile IntputFile, result []CityTemperatures) {
 	var nbLinesProcessed int64
-	for _, v := range resultMap {
+	for _, v := range result {
 		nbLinesProcessed += int64(v.count)
 	}
 	if inputFile.nbLines != nbLinesProcessed {
