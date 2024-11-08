@@ -118,7 +118,7 @@ func (cr *ChunkReader) startReader() {
 		// slog.Debug("startReader - read", "reader", cr.readerNb, "Read offset", readAtOffset)
 		nbBytesInBuffer, err2 := f.ReadAt(bytesBuffer, readAtOffset)
 		if err2 != nil && err2 != io.EOF {
-			slog.Error(err.Error())
+			slog.Error(err2.Error())
 			panic(err2)
 		}
 

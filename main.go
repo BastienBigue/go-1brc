@@ -42,10 +42,15 @@ func main() {
 	// slog.SetLogLoggerLevel(slog.LevelDebug.Level())
 
 	startTime := time.Now()
-	resultMap := processFile(TEST_FILE)
+	sortedCityTemperatures := processFile(TEST_FILE)
 	endTime := time.Now()
+
+	for _, cityTemperatures := range sortedCityTemperatures {
+		fmt.Println(cityTemperatures)
+	}
+
 	fmt.Printf("Execution time is %v\n", endTime.Sub(startTime))
-	checkResult(TEST_FILE, resultMap)
+	checkResult(TEST_FILE, sortedCityTemperatures)
 }
 
 func processFile(inputFile IntputFile) []CityTemperatures {
@@ -60,7 +65,6 @@ func processFile(inputFile IntputFile) []CityTemperatures {
 	}
 
 	sortedCityTemperatures := sorted(reducer.resultMap)
-	fmt.Println(sortedCityTemperatures)
 	return sortedCityTemperatures
 }
 
