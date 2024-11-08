@@ -37,7 +37,7 @@ func (cr *ChunkReader) atStartOfFile() bool {
 }
 
 func (cr *ChunkReader) bytesToSkipBecausePartOfPreviousChunk() int64 {
-	//slog.Debug("bytesToSkipBecausePartOfPreviousChunk", "reader", cr.readerNb, "from", cr.from)
+	// slog.Debug("bytesToSkipBecausePartOfPreviousChunk", "reader", cr.readerNb, "from", cr.from)
 
 	if cr.atStartOfFile() {
 		return cr.from
@@ -69,7 +69,7 @@ func (cr *ChunkReader) bytesToSkipBecausePartOfPreviousChunk() int64 {
 		var res int64
 		for i, currByte := range dummyBytes {
 			if currByte == LineBreak {
-				res = int64(i) + 1
+				res = int64(i)
 				break
 			}
 		}
@@ -79,8 +79,8 @@ func (cr *ChunkReader) bytesToSkipBecausePartOfPreviousChunk() int64 {
 
 // Remove, if necessary, trailing bytes that are not part of this chunk, while keeping the last line complete
 func (cr *ChunkReader) removeTrailingBytes(bytesBuffer []byte, nbBytesLeftInChunk int64, nbBytesInBuffer int) []byte {
+	// slog.Debug("startReader - remove trailing", "reader", cr.readerNb, "nbBytesLeftInChunk", nbBytesLeftInChunk, "nbBytesInBuffer", nbBytesInBuffer)
 	if nbBytesLeftInChunk < int64(nbBytesInBuffer) {
-		//slog.Debug("startReader - remove trailing", "reader", cr.readerNb, "nbBytesLeftInChunk", nbBytesLeftInChunk, "nbBytesInBuffer", nbBytesInBuffer)
 		for i, byte := range bytesBuffer[nbBytesLeftInChunk-1:] {
 			if byte == LineBreak {
 				bytesBuffer = bytesBuffer[:nbBytesLeftInChunk+int64(i)]
@@ -96,13 +96,12 @@ func (cr *ChunkReader) startReader() {
 	slog.Info("startReader - start", "reader", cr.readerNb)
 
 	bytesToSkipBecauseConsumedByPreviousReader := cr.bytesToSkipBecausePartOfPreviousChunk()
-	//slog.Debug("Skip bytes at start of chunk", "reader", cr.readerNb, "bytesSkipped", bytesToSkipBecauseConsumedByPreviousReader)
+	// slog.Debug("Skip bytes at start of chunk", "reader", cr.readerNb, "bytesSkipped", bytesToSkipBecauseConsumedByPreviousReader)
 
 	// Reduces number of bytes to read by the number of bytes present at the beginning of the chunk and that were processed by the previous reader.
 	nbBytesLeftInChunk := cr.chunkSize - bytesToSkipBecauseConsumedByPreviousReader
 
 	for nbBytesLeftInChunk > 0 {
-
 		// slog.Debug("startReader - loop", "reader", cr.readerNb, "bytes to read", nbBytesLeftInChunk)
 
 		f, err := os.Open(cr.fileName)
@@ -132,7 +131,7 @@ func (cr *ChunkReader) startReader() {
 }
 
 func (cr *ChunkReader) processBuffer(byteBuffer []byte) int64 {
-	//slog.Debug("processBuffer", "readerNb", cr.readerNb, "nbBytesLeftInChunk", nbBytesLeftInChunk, "len(byteBuffer)", len(byteBuffer), "byteBuffer", string(byteBuffer))
+	// slog.Debug("processBuffer", "reader", cr.readerNb, "len(byteBuffer)", len(byteBuffer), "byteBuffer", string(byteBuffer))
 	startLineOffset := 0
 	temperatureOffset := 0
 	var currentCity, temperature []byte
@@ -143,7 +142,7 @@ func (cr *ChunkReader) processBuffer(byteBuffer []byte) int64 {
 			temperatureOffset = currentOffset + 1
 		}
 		if byteRead == LineBreak {
-			//slog.Debug("processBuffer - Line break found", "reader", cr.readerNb, "startLineOffset", startLineOffset, "endLineOffset", currentOffset, "line", byteBuffer[startLineOffset:currentOffset])
+			// slog.Debug("processBuffer - Line break found", "reader", cr.readerNb, "startLineOffset", startLineOffset, "endLineOffset", currentOffset, "line", byteBuffer[startLineOffset:currentOffset])
 
 			// Removes "." from decimal
 			temperature = append(byteBuffer[temperatureOffset:currentOffset-2], byteBuffer[currentOffset-1])
@@ -168,7 +167,7 @@ func (cr *ChunkReader) processRecord(city []byte, temperature []byte) {
 
 	temperatureInt32 := parseTemperatureAsInt(temperature)
 
-	//slog.Debug("processRecord", "readerNb", cr.readerNb, "city", city, "temperature", temperatureInt32)
+	// slog.Debug("processRecord", "reader", cr.readerNb, "city", string(city), "temperature", temperatureInt32)
 	existingEntry, exists := cr.chunkResultMap[cityHash]
 	if !exists {
 		cr.chunkResultMap[cityHash] = NewCityTemperatures(city, temperatureInt32)

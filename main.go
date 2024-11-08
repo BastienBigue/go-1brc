@@ -12,13 +12,13 @@ var READ_BUFFER_SIZE = 8 * 1024 * 1024
 
 // var TEST_FILE = IntputFile{"test_data/measurements_10.txt", 10}
 
-var TEST_FILE = IntputFile{"test_data/measurements_1k.txt", 1000}
+//var TEST_FILE = IntputFile{"test_data/measurements_1k.txt", 1000}
 
 // var TEST_FILE = IntputFile{"test_data/measurements_100k.txt", 100 * 1000}
 
 // var TEST_FILE = IntputFile{"test_data/measurements_10M.txt", 10 * 1000 * 1000}
 
-// var TEST_FILE = IntputFile{"test_data/measurements_1B.txt", 1000 * 1000 * 1000}
+var TEST_FILE = IntputFile{"test_data/measurements_1B.txt", 1000 * 1000 * 1000}
 
 type IntputFile struct {
 	fileName string
